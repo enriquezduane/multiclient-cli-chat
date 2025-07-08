@@ -22,3 +22,7 @@ listen queues for incoming connections
 accept takes a connection from the listen queue and returns socket object and address
 
 socket object is used by the server to communicate (send and receive messages or data) to client
+
+you cannot predict how many bytes each recv returns
+
+ephemeral port - auto assigned port (this happens when client connects to server)
