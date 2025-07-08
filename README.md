@@ -1,1 +1,1 @@
-# multiclient-cli-chat-app
+# Multi-Client Command-Line Chat.
