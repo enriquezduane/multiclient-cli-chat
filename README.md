@@ -26,3 +26,5 @@ socket object is used by the server to communicate (send and receive messages or
 you cannot predict how many bytes each recv returns
 
 ephemeral port - auto assigned port (this happens when client connects to server)
+
+to implement multithreading, use threading
