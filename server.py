@@ -29,6 +29,9 @@ def run_server():
 
         print(f"Received: {request}")
 
+        response = request
+        client_socket.send(response.encode("utf-8"))
+
     client_socket.close()
     print("Connection to client closed")
     # close server socket
