@@ -4,21 +4,38 @@ import threading
 server_ip = "127.0.0.1" # localhost
 port = 8000
 
+clients = {}
+clients_lock = threading.Lock()
+
+def broadcast(message, sender_socket=None):
+    with clients_lock:
+        for client_socket in list(clients.keys()):
+            if client_socket != sender_socket:
+                try:
+                    client_socket.send(message.encode("utf-8"))
+                except socket.error:
+                    print(f"Failed to send message to {clients.get(client_socket, 'unknown')}. Connection may be lost.")
+
 def client_handler(client_socket, client_address):
     try:
+        username = client_socket.recv(1024).decode("utf-8")
+        clients[client_socket] = username
+
+        join_msg = f"--- {username} has joined the chat ---"
+        broadcast(join_msg)
+
         while True:
             request = client_socket.recv(1024).decode("utf-8")
             if request.lower() == "close":
                 client_socket.send("closed".encode("utf-8"))
                 break
             elif not request:
-                print(f"Client {client_address} disconnected.")
+                print(f"Client {clients[client_socket]} disconnected.")
                 break
 
-            print(f"Received from {client_address}: {request}")
-
-            response = request
-            client_socket.send(response.encode("utf-8"))
+            broadcast_msg = f"[{username}]: {request}"
+            print(f"Broadcasting from {username}: {request}")
+            broadcast(broadcast_msg, client_socket)
     except ConnectionResetError:
         print(f"Connection reset by {client_address}.")
     finally:
