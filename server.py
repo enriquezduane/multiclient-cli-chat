@@ -1,7 +1,22 @@
 import socket
+import threading
 
 server_ip = "127.0.0.1" # localhost
 port = 8000
+
+def client_handler(client_socket):
+    while True:
+        request = client_socket.recv(1024).decode("utf-8")
+        if request.lower() == "close":
+            client_socket.send("closed".encode("utf-8"))
+            break
+
+        print(f"Received: {request}")
+
+        response = request
+        client_socket.send(response.encode("utf-8"))
+    client_socket.close()
+    pass
 
 def run_server():
     # create a socket object
@@ -16,23 +31,14 @@ def run_server():
     server.listen(0)
     print(f"Listening on {server_ip}:{port}")
 
-    client_socket, client_address = server.accept()
-    print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
 
     while True:
-        request = client_socket.recv(1024)
-        request = request.decode("utf-8")
+        client_socket, client_address = server.accept()
+        print(f"Accepted connection from {client_address[0]}:{client_address[1]}")
+        thread = threading.Thread(target=client_handler, args=(client_socket,))
+        thread.start()
 
-        if request.lower() == "close":
-            client_socket.send("closed".encode("utf-8"))
-            break
 
-        print(f"Received: {request}")
-
-        response = request
-        client_socket.send(response.encode("utf-8"))
-
-    client_socket.close()
     print("Connection to client closed")
     # close server socket
     server.close()
