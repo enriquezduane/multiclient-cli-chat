@@ -48,3 +48,10 @@ Once the core is working, you can easily extend it to learn more.
 *   **Private Messages:** Implement a command like `/whisper <username> <message>`. The server will parse this, find the target user's socket in its dictionary, and send the message only to them.
 *   **User List:** Implement a command like `/who` that makes the server send back a list of all currently connected users.
 *   **Refactor to use `select()`:** This is a big step. Instead of threads, rewrite your server to use a single loop with `select()`. This will teach you about non-blocking I/O and how high-performance servers work under the hood.
+
+Write a Great README.md: This is non-negotiable.
+Title & Tagline: What is it in one sentence?
+Screenshot/GIF: Seriously. Use a tool like Giphy Capture or Kap. A visual makes a world of difference. It shows your project works.
+Tech Stack: What technologies did you use? (e.g., Python, Flask, SQLAlchemy, React).
+Why You Built It: What did you want to learn? (e.g., "I built this to understand how WebSockets work for real-time communication.")
+How to Run It Locally: Provide clear, step-by-step instructions. git clone ..., pip install -r requirements.txt, python app.py.
