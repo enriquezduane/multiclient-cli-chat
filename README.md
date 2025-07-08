@@ -28,3 +28,14 @@ you cannot predict how many bytes each recv returns
 ephemeral port - auto assigned port (this happens when client connects to server)
 
 to implement multithreading, use threading
+
+make sure that exiting is working properly and graceful exiting
+
+
+store users or clients in a dictionary
+
+lock is to ensure only one client can change the client list
+
+client must have receiver thread to also recieve messages that were sent from other clients
+
+server will broadcast to clients
