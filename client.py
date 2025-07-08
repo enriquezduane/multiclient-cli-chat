@@ -16,10 +16,10 @@ def receive_handler(client_socket):
             
             response = response_bytes.decode("utf-8")
 
-            sys.stdout.write(f"\r{response}\n")
+            sys.stdout.write('\r' + ' ' * 50 + '\r')  # Clear line
+            sys.stdout.write(f"{response}\n")
             sys.stdout.write("You: ")
             sys.stdout.flush()
-
 
         except ConnectionResetError:
             print("\nConnection to the server was lost. Press Enter to exit.")

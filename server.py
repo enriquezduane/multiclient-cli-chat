@@ -17,28 +17,40 @@ def broadcast(message, sender_socket=None):
                     print(f"Failed to send message to {clients.get(client_socket, 'unknown')}. Connection may be lost.")
 
 def client_handler(client_socket, client_address):
+    username = None
     try:
-        username = client_socket.recv(1024).decode("utf-8")
-        clients[client_socket] = username
-
+        username = client_socket.recv(1024).decode("utf-8").strip()
+        if not username:
+            username = f"User_{client_address[1]}"
+            
+        with clients_lock:
+            clients[client_socket] = username
+            
         join_msg = f"--- {username} has joined the chat ---"
         broadcast(join_msg)
-
+        
         while True:
             request = client_socket.recv(1024).decode("utf-8")
-            if request.lower() == "close":
-                client_socket.send("closed".encode("utf-8"))
+            if request.lower() in ["close", "exit"] or not request:
+                if request.lower() in ["close", "exit"]:
+                    client_socket.send("closed".encode("utf-8"))
                 break
-            elif not request:
-                print(f"Client {clients[client_socket]} disconnected.")
-                break
-
+                
             broadcast_msg = f"[{username}]: {request}"
             print(f"Broadcasting from {username}: {request}")
             broadcast(broadcast_msg, client_socket)
-    except ConnectionResetError:
+            
+    except (ConnectionResetError, ConnectionAbortedError):
         print(f"Connection reset by {client_address}.")
+    except Exception as e:
+        print(f"Error handling client {client_address}: {e}")
     finally:
+        with clients_lock:
+            if client_socket in clients:
+                if username:
+                    leave_msg = f"--- {username} has left the chat ---"
+                    broadcast(leave_msg)
+                del clients[client_socket]
         client_socket.close()
         print(f"Connection to {client_address} closed.")
 
