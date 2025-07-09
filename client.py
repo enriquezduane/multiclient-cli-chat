@@ -89,6 +89,28 @@ def receive_handler(sock):
                     client_running = False
                     break
                 continue
+            elif response.startswith("[PRIVATE"):
+                # Highlight private messages
+                print(f"\n🔒 {response}")
+                if client_running:
+                    sys.stdout.write("You: ")
+                    sys.stdout.flush()
+                continue
+            elif response.startswith("Connected users"):
+                # Format user list nicely
+                print(f"\n👥 {response}")
+                if client_running:
+                    sys.stdout.write("You: ")
+                    sys.stdout.flush()
+                continue
+            elif response.startswith("Available commands:"):
+                # Format help text nicely
+                print(f"\n📋 Help:")
+                print(response)
+                if client_running:
+                    sys.stdout.write("You: ")
+                    sys.stdout.flush()
+                continue
             
             # Clear current input line and display message
             sys.stdout.write('\r' + ' ' * 80 + '\r')  # Clear line
@@ -119,6 +141,11 @@ def input_handler(sock):
                 break
                 
             if not msg.strip():
+                continue
+            
+            # Show helpful hints for commands
+            if msg.strip() == "/":
+                print("💡 Tip: Type /help to see available commands")
                 continue
                 
             # Validate message length
@@ -201,7 +228,12 @@ def run_client():
             return
 
         print(f"Joined chat as: {username}")
-        print("Type 'exit' to leave the chat.")
+        print("💬 Chat Commands:")
+        print("   • Type messages normally to chat with everyone")
+        print("   • /whisper <user> <message> - Send private message")
+        print("   • /who - List all users")
+        print("   • /help - Show all commands")
+        print("   • 'exit' or Ctrl+C - Leave chat")
         print("-" * 50)
 
         # Start receiver thread

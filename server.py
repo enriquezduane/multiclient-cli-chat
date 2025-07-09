@@ -78,6 +78,75 @@ def broadcast(message, sender_socket=None):
                 except:
                     pass
 
+def send_private_message(sender_username, target_username, message):
+    """Send a private message to a specific user"""
+    target_socket = None
+    
+    with clients_lock:
+        # Find the target user's socket
+        for socket, username in clients.items():
+            if username.lower() == target_username.lower():
+                target_socket = socket
+                break
+    
+    if target_socket:
+        private_msg = f"[PRIVATE from {sender_username}]: {message}"
+        if send_message(target_socket, private_msg):
+            return True, f"Private message sent to {target_username}"
+        else:
+            return False, f"Failed to send message to {target_username} (connection issue)"
+    else:
+        return False, f"User '{target_username}' not found"
+
+def get_user_list():
+    """Get a list of all connected users"""
+    with clients_lock:
+        usernames = list(clients.values())
+    
+    if usernames:
+        user_list = "Connected users (" + str(len(usernames)) + "): " + ", ".join(sorted(usernames))
+    else:
+        user_list = "No users currently connected"
+    
+    return user_list
+
+def handle_command(client_socket, username, message):
+    """Handle chat commands starting with /"""
+    parts = message.strip().split()
+    command = parts[0].lower()
+    
+    if command == "/whisper" or command == "/w":
+        if len(parts) < 3:
+            send_message(client_socket, "ERROR: Usage: /whisper <username> <message>")
+            return
+        
+        target_username = parts[1]
+        whisper_message = " ".join(parts[2:])
+        
+        success, response = send_private_message(username, target_username, whisper_message)
+        
+        if success:
+            # Send confirmation to sender
+            confirmation = f"[PRIVATE to {target_username}]: {whisper_message}"
+            send_message(client_socket, confirmation)
+        else:
+            send_message(client_socket, f"ERROR: {response}")
+    
+    elif command == "/who" or command == "/users":
+        user_list = get_user_list()
+        send_message(client_socket, user_list)
+    
+    elif command == "/help" or command == "/h":
+        help_text = """Available commands:
+/whisper <username> <message> (or /w) - Send a private message
+/who (or /users) - List all connected users  
+/help (or /h) - Show this help message
+/exit - Leave the chat"""
+        send_message(client_socket, help_text)
+    
+    else:
+        send_message(client_socket, f"ERROR: Unknown command '{command}'. Type /help for available commands.")
+
 def client_handler(client_socket, client_address):
     """Handle individual client connections"""
     username = None
@@ -115,7 +184,10 @@ def client_handler(client_socket, client_address):
         broadcast(join_msg)
         
         # Send welcome message to the user
-        send_message(client_socket, f"Welcome to the chat, {username}!")
+        welcome_msg = f"""Welcome to the chat, {username}!
+Type /help to see available commands.
+Current users: {len(clients)}"""
+        send_message(client_socket, welcome_msg)
         
         # Remove timeout for message receiving
         client_socket.settimeout(None)
@@ -133,10 +205,15 @@ def client_handler(client_socket, client_address):
             if len(request) > 1000:  # 1KB message limit
                 send_message(client_socket, "ERROR: Message too long")
                 continue
-                
-            broadcast_msg = f"[{username}]: {request}"
-            print(f"Broadcasting from {username}: {request}")
-            broadcast(broadcast_msg, client_socket)
+            
+            # Check if it's a command
+            if request.startswith('/'):
+                handle_command(client_socket, username, request)
+            else:
+                # Regular broadcast message
+                broadcast_msg = f"[{username}]: {request}"
+                print(f"Broadcasting from {username}: {request}")
+                broadcast(broadcast_msg, client_socket)
             
     except socket.timeout:
         print(f"Client {client_address} timed out during initial handshake.")
