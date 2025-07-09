@@ -1,41 +1,51 @@
-# Multi-Client Command-Line Chat.
+# Multi-Client Command-Line Chat
 
-python m venv .venv
+![Project GIF](https://github.com/user-attachments/assets/4d70abb2-0132-4ace-89b1-fad143a2ef96)
 
-source activate
+### Motivation
 
-no dependencies needed. socket library is built in
+This project was created to build a functional, real-time chat application that runs in the command line. The goal was to implement a robust client-server architecture that allows multiple users to connect and communicate simultaneously, while also providing features like private messaging and user lists.
 
-inet is ipv4
-stream is tcp sockets
+### Tech Stack
 
-socket = ipadd:port
+*   **Python 3**
+*   **socket**: For low-level network communication (TCP sockets).
+*   **threading**: To handle multiple client connections concurrently.
+*   **struct**: To ensure reliable message delivery by packing and unpacking message lengths.
+*   **signal**: For graceful server and client shutdown on interruption.
 
-ex. 127.0.0.1:80
+### Installation
 
-for setting ports in a server, use values above 1023 to avoid collission with other system ports
+No external dependencies are required to run this project. All necessary libraries are part of the standard Python library.
 
-bind just assigns an IP:port to a socket. not ready for connections yet
+**1. Start the Server**
 
-listen queues for incoming connections
+Open a terminal and run the following command to start the chat server. It will listen for incoming connections.
 
-accept takes a connection from the listen queue and returns socket object and address
+```bash
+python3 server.py
+```
 
-socket object is used by the server to communicate (send and receive messages or data) to client
+**2. Run the Client**
 
-you cannot predict how many bytes each recv returns
+Open one or more new terminal windows to run the client application. Each instance will connect to the server.
 
-ephemeral port - auto assigned port (this happens when client connects to server)
+```bash
+python3 client.py
+```
 
-to implement multithreading, use threading
+You will be prompted to enter a username. Once connected, you can start chatting with other users.
 
-make sure that exiting is working properly and graceful exiting
+### What I Learned
 
+This project was a deep dive into several key programming concepts:
 
-store users or clients in a dictionary
+*   I learned how to establish a **client-server connection** using Python's `socket` library. This involved understanding the difference between **IPv4 (`AF_INET`)** and **TCP (`SOCK_STREAM`)**, and correctly using methods like `bind()`, `listen()`, and `accept()` on the server to manage incoming connections.
 
-lock is to ensure only one client can change the client list
+*    A critical challenge was ensuring that messages are received completely. I implemented a **protocol** where each message is prefixed with its length using `struct.pack`. The receiver then reads this prefix first to know exactly how many bytes to expect, preventing errors from partial `socket.recv()` calls.
 
-client must have receiver thread to also recieve messages that were sent from other clients
+*   To handle multiple clients at once without blocking, I used the `threading` library. Each client is managed in a **separate thread** on the server. I also learned the importance of using `threading.Lock` to prevent **race conditions** when accessing shared data, such as the dictionary of connected clients.
 
-server will broadcast to clients
+*   I implemented mechanisms for a **graceful exit**. Using `try...except` blocks and the `signal` library to catch `KeyboardInterrupt` (Ctrl+C), the server and client can shut down cleanly, close their sockets, and notify other users of their departure.
+
+*   The client-side code focuses on creating a smooth user experience in the terminal. This includes handling user input in a non-blocking way, clearing lines to display new messages, and implementing a simple **command parser** for features like `/whisper`, `/who`, and `/help`.
